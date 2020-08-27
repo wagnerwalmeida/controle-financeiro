@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        .callout {
+            padding: 1.25rem;
+            border: 1px solid #e9ecef;
+            border-left-width: .25rem;
+            border-radius: .25rem;
+        }
+
+        .callout-success {
+            border-left-color: #28a745;
+        }
+
+        .callout-warning {
+            border-left-color: #f0ad4e;
+        }
+
+        .callout-info {
+            border-left-color: #5bc0de;
+        }
+
+        .callout-danger {
+            border-left-color: #d9534f;
+        }
+
+        .close {
+            float: right;
+            display: inline-block;
+            padding: 2px 5px;
+            background: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <h1>Controle de Despesas</h1>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h2>Saldo Atual: <small class="text-primary" id="saldo">R$ 0,00</small></h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card-group text-center">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Receitas<br><small class="text-success" id="receitas">R$ 0,00</small>
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Despesas<br><small class="text-danger" id="despesas">R$ 0,00</small>
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h2>Listagem</h2>
+                <div id="listagem" class="row"></div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <h2>Cadastro</h2>
+                <form class="row" onsubmit="adicionarTransacao(event)">
+                    <div class="form-group col-12 col-md-4 mb-3">
+                        <label for="id-nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="id-nome" required>
+                    </div>
+                    <div class="form-group col-12 col-md-4 mb-3">
+                        <label for="id-tipo" class="form-label">Tipo</label>
+                        <select id="id-tipo" class="form-control">
+                            <option value="receita">Receita</option>
+                            <option value="despesa">Despesa</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-12 col-md-4 mb-3">
+                        <label for="id-valor" class="form-label">Valor</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" step="0.01" lang="pt" class="form-control" id="id-valor" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <button class="btn btn-success btn-block">Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        var receitas = 0
+        var despesas = 0
+        var saldo = 0
+        var itens = []
+
+        function adicionarTransacao(event) {
+            event.preventDefault()
+            const nome = document.getElementById('id-nome')
+            const valor = document.getElementById('id-valor')
+            const tipo = document.getElementById('id-tipo')
+
+            itens.push({
+                nome: nome.value,
+                valor: valor.value,
+                tipo: tipo.value
+            })
+            localStorage.setItem('itens', JSON.stringify(itens))
+
+            adicionarItem({
+                nome: nome.value,
+                valor: valor.value,
+                tipo: tipo.value
+            })
+
+            nome.value = ''
+            valor.value = ''
+            tipo.selectedIndex = '0'
+
+            nome.focus()
+        }
+
+        function adicionarItem({ nome, valor, tipo }) {
+
+            let flag = ''
+
+            switch (tipo) {
+                case 'receita':
+                    adicionarReceita({ valor })
+                    flag = 'success'
+                    break
+
+                case 'despesa':
+                    adicionarDespesa({ valor })
+                    flag = 'danger'
+                    break
+            }
+
+            recalcularTransacoes()
+
+            const item = `
+                <div class="callout callout-${flag}">
+                    <button data-id='${itens.length - 1}' data-valor='${valor}' data-tipo='${tipo}' onclick='removerCard(this)'
+                    type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    ${nome}
+                    <br><strong>${new Intl.NumberFormat("pt-BR", { style: 'currency', currency: 'BRL' }).format(valor)}</strong>
+                </div>
+            `
+            adicionarCard(item)
+        }
+        function adicionarCard(item) {
+            const card = document.createElement('div')
+            card.classList.add('col-12')
+            card.classList.add('col-md-4')
+            card.classList.add('mt-3')
+            card.innerHTML = item
+            document.getElementById('listagem').appendChild(card)
+        }
+        function adicionarReceita({ valor }) {
+            receitas += valor
+        }
+        function adicionarDespesa({ valor }) {
+            despesas += valor
+        }
+
+        function removerCard(card) {
+            const id = card.dataset.id
+            const valor = card.dataset.valor
+            const tipo = card.dataset.tipo
+
+            itens.splice(id)
+            localStorage.setItem('itens', JSON.stringify(itens))
+
+            removerItem({ valor, tipo })
+
+            card.parentNode.parentNode.remove()
+        }
+        function removerItem({ valor, tipo }) {
+            switch (tipo) {
+                case 'receita':
+                    removerReceita({ valor })
+                    break
+                case 'despesa':
+                    removerDespesa({ valor })
+                    break
+            }
+            recalcularTransacoes()
+        }
+        function removerReceita({ valor }) {
+            receitas -= valor
+        }
+        function removerDespesa({ valor }) {
+            despesas -= valor
+        }
+
+        function recalcularTransacoes() {
+            saldo = (receitas - despesas)
+            atualizarSaldo({ valor: saldo })
+            atualizarReceitas({ valor: receitas })
+            atualizarDespesas({ valor: despesas })
+        }
+
+        function formatarDinheiro({ valor }) {
+            return new Intl.NumberFormat("pt-BR", { style: 'currency', currency: 'BRL' }).format(valor)
+        }
+
+        function atualizarSaldo({ valor }) {
+            document.getElementById('saldo').innerHTML = formatarDinheiro({ valor })
+        }
+        function atualizarReceitas({ valor }) {
+            document.getElementById('receitas').innerHTML = formatarDinheiro({ valor })
+        }
+        function atualizarDespesas({ valor }) {
+            document.getElementById('despesas').innerHTML = formatarDinheiro({ valor })
+        }
+
+        function carregarItens() {
+            itens = JSON.parse(localStorage.getItem('itens')) || []
+        }
+
+        function carregarTransacoes() {
+            carregarItens()
+            itens.map(element => adicionarItem(element))
+        }
+
+        carregarTransacoes()
+    </script>
+</body>
+
+</html>
+
+
+
+<!-- 07 outubro -> entrega parcial do TCC (artigo) do jeito que estiver
+    Mandar e-mail para o orientador antes com .DOC e ele vai devolver o e-mail confirmando que está ciente (com cópia para tecnologia@eduvaleavare.com.br)
+
+
+13/11 -> prazo final para entrega TCC -->
