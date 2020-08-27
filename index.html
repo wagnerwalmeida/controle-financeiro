@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <title>Controle Financeiro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.bundle.min.js"></script>
@@ -44,7 +45,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <h1>Controle de Despesas</h1>
+                <h1>Controle Financeiro</h1>
             </div>
         </div>
         <hr>
@@ -98,7 +99,7 @@
                         <label for="id-valor" class="form-label">Valor</label>
                         <div class="input-group">
                             <span class="input-group-text">R$</span>
-                            <input type="number" step="0.01" lang="pt" class="form-control" id="id-valor" required>
+                            <input type="number" step="0.01" min="0.01" lang="pt" class="form-control" id="id-valor" required>
                         </div>
                     </div>
                     <div class="form-group mb-3">
@@ -121,6 +122,16 @@
             const nome = document.getElementById('id-nome')
             const valor = document.getElementById('id-valor')
             const tipo = document.getElementById('id-tipo')
+
+            if(nome.value.trim() == '') {
+                alert('Campo Nome é obrigatório')
+                nome.focus()
+                return
+            } else if(Number(valor.value) == 0) {
+                alert('Campo Valor é obrigatório')
+                valor.focus()
+                return
+            }
 
             itens.push({
                 nome: nome.value,
